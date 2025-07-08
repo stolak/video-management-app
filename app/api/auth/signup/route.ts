@@ -1,55 +1,38 @@
 import { NextResponse } from "next/server"
-import { cookies } from "next/headers"
-
-// Mock user database - replace with real database
-const users = [
-  {
-    id: 1,
-    email: "demo@example.com",
-    password: "password123",
-    name: "Demo User",
-  },
-]
+import { supabase } from "@/lib/supabaseClient"
 
 export async function POST(request: Request) {
   try {
     const { email, password, fullName } = await request.json()
 
-    // Check if user already exists
-    const existingUser = users.find((u) => u.email === email)
-    if (existingUser) {
-      return NextResponse.json({ error: "User already exists" }, { status: 400 })
-    }
-
-    // Create new user
-    const newUser = {
-      id: users.length + 1,
+    // Sign up with Supabase
+    const { data, error } = await supabase.auth.signUp({
       email,
-      password, // In real app, hash this password
-      name: fullName,
+      password,
+      options: { data: { full_name: fullName } },
+    })
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
     }
 
-    users.push(newUser)
-
-    // Create session token
-    const token = `user_${newUser.id}_${Date.now()}`
-
-    // Set cookie
-    cookies().set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    })
-
-    return NextResponse.json({
+    const response = NextResponse.json({
       message: "Account created successfully",
-      user: {
-        id: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-      },
+      user: data.user,
+      session: data.session,
     })
+
+    // Set access token as HTTP-only cookie if available
+    if (data.session?.access_token) {
+      response.cookies.set("auth-token", data.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      })
+    }
+
+    return response
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }

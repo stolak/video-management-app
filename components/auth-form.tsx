@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
+import { supabase } from "@/lib/supabaseClient"
 
 interface AuthFormProps {
   mode: "signin" | "signup"
@@ -30,23 +31,44 @@ export default function AuthForm({ mode }: AuthFormProps) {
     const fullName = formData.get("fullName") as string
 
     try {
-      const endpoint = activeTab === "signin" ? "/api/auth/signin" : "/api/auth/signup"
-      const body = activeTab === "signin" ? { email, password } : { email, password, fullName }
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        toast.success(activeTab === "signin" ? "Signed in successfully!" : "Account created successfully!")
-        router.push("/dashboard")
-        router.refresh()
+      let error
+      if (activeTab === "signin") {
+        // Use custom API for sign in
+        const response = await fetch("/api/auth/signin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        })
+        const data = await response.json()
+        if (response.ok) {
+          // Save token to localStorage
+          if (typeof window !== "undefined" && data.user) {
+            localStorage.setItem("auth-token", data.token || "")
+            localStorage.setItem("user", JSON.stringify(data.user))
+          }
+          toast.success("Signed in successfully!")
+          router.push("/dashboard")
+          router.refresh()
+        } else {
+          error = data.error
+        }
       } else {
-        toast.error(data.error || "Something went wrong")
+        // Use Supabase for sign up
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName } },
+        })
+        if (!signUpError) {
+          toast.success("Account created successfully!")
+          router.push("/dashboard")
+          router.refresh()
+        } else {
+          error = signUpError.message
+        }
+      }
+      if (error) {
+        toast.error(error || "Something went wrong")
       }
     } catch (error) {
       toast.error("Network error. Please try again.")

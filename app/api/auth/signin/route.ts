@@ -1,52 +1,44 @@
-import { NextResponse } from "next/server"
+import { NextResponse,} from "next/server"
 import { cookies } from "next/headers"
-
-// Mock user database - replace with real database
-const users = [
-  {
-    id: 1,
-    email: "demo@example.com",
-    password: "password123", // In real app, this would be hashed
-    name: "Demo User",
-  },
-  {
-    id: 2,
-    email: "admin@example.com",
-    password: "admin123",
-    name: "Admin User",
-  },
-]
+import { supabase } from "@/lib/supabaseClient"
 
 export async function POST(request: Request) {
   try {
     const { email, password } = await request.json()
 
-    // Find user
-    const user = users.find((u) => u.email === email && u.password === password)
+    // Sign in with Supabase
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
-    if (!user) {
-      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 401 })
+    }
+        // Save token to localStorage
+
+          if (typeof window !== "undefined" && data.user) {
+            localStorage.setItem("auth-token", data?.session?.access_token || "")
+            localStorage.setItem("user", JSON.stringify(data.user))
+          }
+
+         const response = NextResponse.json({
+      message: "Successfully signed in",
+      user: data.user,
+      session: data.session,
+    })
+
+    // Set access token as HTTP-only cookie if available
+    if (data.session?.access_token) {
+      response.cookies.set("auth-token", data.session.access_token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 7, // 7 days
+      })
     }
 
-    // Create session token (in real app, use proper JWT)
-    const token = `user_${user.id}_${Date.now()}`
-
-    // Set cookie
-    cookies().set("auth-token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
-    })
-
-    return NextResponse.json({
-      message: "Signed in successfully",
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-      },
-    })
+    return response
   } catch (error) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
