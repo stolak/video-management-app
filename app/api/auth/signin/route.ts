@@ -13,10 +13,7 @@ export async function POST(request: Request) {
       password,
     })
 
-    // const { data, error } = await getSupabaseServerClient.arguments({
-    //   email,
-    //   password,
-    // })
+    
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }

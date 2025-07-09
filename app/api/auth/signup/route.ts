@@ -1,39 +1,37 @@
 import { NextResponse } from "next/server"
-import { supabase } from "@/lib/supabaseClient"
+import { getSupabaseServerClient } from "@/lib/supabaseServerClient"
 
 export async function POST(request: Request) {
   try {
-    const { email, password, fullName } = await request.json()
+    const { email, password, full_name } = await request.json()
+    const supabase = getSupabaseServerClient()
 
-    // Sign up with Supabase
-    const { data, error } = await supabase.auth.signUp({
+    // 1. Create user in Supabase Auth (admin API)
+    const { data: userData, error: userError } = await supabase.auth.admin.createUser({
       email,
       password,
-      options: { data: { full_name: fullName } },
+      email_confirm: true,
     })
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 })
+    if (userError || !userData?.user) {
+      return NextResponse.json({ error: userError?.message || "Signup failed" }, { status: 400 })
     }
 
-    const response = NextResponse.json({
-      message: "Account created successfully",
-      user: data.user,
-      session: data.session,
-    })
+    // 2. Create profile in 'profiles' table
+    const { error: profileError } = await supabase.from("profiles").insert([
+      {
+        user_id: userData.user.id,
+        email,
+        full_name,
+      },
+    ])
 
-    // Set access token as HTTP-only cookie if available
-    if (data.session?.access_token) {
-      response.cookies.set("auth-token", data.session.access_token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 60 * 60 * 24 * 7, // 7 days
-      })
+    if (profileError) {
+      return NextResponse.json({ error: profileError.message }, { status: 500 })
     }
 
-    return response
-  } catch (error) {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+    return NextResponse.json({ message: "Signup successful" })
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 })
   }
 }

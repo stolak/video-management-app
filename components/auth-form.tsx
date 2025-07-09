@@ -50,18 +50,19 @@ export default function AuthForm({ mode }: AuthFormProps) {
           error = data.error
         }
       } else {
-        // Use Supabase for sign up
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { full_name: fullName } },
+        // Use backend API for sign up
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, full_name: fullName }),
         })
-        if (!signUpError) {
+        const data = await response.json()
+        if (response.ok) {
           toast.success("Account created successfully!")
           router.push("/dashboard")
           router.refresh()
         } else {
-          error = signUpError.message
+          error = data.error
         }
       }
       if (error) {
