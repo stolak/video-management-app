@@ -1,7 +1,24 @@
+"use client"
+
 import VideoListContainer from "@/components/video-list-container"
 import VideoFilters from "@/components/video-filters"
+import { useState } from "react"
 
 export default function Dashboard() {
+  const [filters, setFilters] = useState({
+    search: "",
+    status: "all",
+    dateRange: {},
+  })
+
+  function handleFilterChange(newFilters: {
+    search: string
+    status: string
+    dateRange: { from?: Date; to?: Date }
+  }) {
+    setFilters(newFilters)
+  }
+
   return (
     <div>
       <div className="mb-6">
@@ -10,10 +27,10 @@ export default function Dashboard() {
       </div>
 
       <div className="mb-6">
-        <VideoFilters />
+        <VideoFilters onChange={handleFilterChange} />
       </div>
 
-      <VideoListContainer />
+      <VideoListContainer filters={filters} />
     </div>
   )
 }

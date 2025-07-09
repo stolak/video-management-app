@@ -16,12 +16,25 @@ function VideoListSkeleton() {
   )
 }
 
-export default function VideoListContainer() {
+interface VideoListContainerProps {
+  filters: {
+    search: string
+    status: string
+    dateRange: { from?: Date; to?: Date }
+  }
+}
+
+export default function VideoListContainer({ filters }: VideoListContainerProps) {
   const [videos, setVideos] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchVideos = async () => {
-    const res = await fetch("/api/videos", { cache: "no-store" })
+    const params = new URLSearchParams()
+    if (filters.status && filters.status !== "all") params.append("status", filters.status)
+    if (filters.dateRange?.from) params.append("startDate", filters.dateRange.from.toISOString().slice(0, 10))
+    if (filters.dateRange?.to) params.append("endDate", filters.dateRange.to.toISOString().slice(0, 10))
+    if (filters.search) params.append("search", filters.search)
+    const res = await fetch(`/api/videos?${params.toString()}`, { cache: "no-store" })
     if (res.ok) {
       setVideos(await res.json())
     }
@@ -43,7 +56,7 @@ export default function VideoListContainer() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [filters])
 
   if (loading) return <VideoListSkeleton />
   return <VideoList videos={videos} />
