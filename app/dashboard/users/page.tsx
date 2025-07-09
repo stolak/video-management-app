@@ -1,9 +1,15 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { MoreHorizontal, User } from "lucide-react"
+import { MoreHorizontal, User, Plus } from "lucide-react"
+import { useState } from "react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 export default function UsersPage() {
+  const [showModal, setShowModal] = useState(false)
+  const [form, setForm] = useState({ name: "", email: "", role: "User", status: "Active", joinDate: "" })
   const users = [
     {
       id: 1,
@@ -15,11 +21,26 @@ export default function UsersPage() {
     },
   ]
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    // TODO: Add API call to create user
+    setShowModal(false)
+  }
+
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-        <p className="text-gray-600">Manage user accounts and permissions</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Users</h1>
+          <p className="text-gray-600">Manage user accounts and permissions</p>
+        </div>
+        <Button onClick={() => setShowModal(true)} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" /> Create User
+        </Button>
       </div>
 
       <Card>
@@ -66,6 +87,75 @@ export default function UsersPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create User</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">Name</label>
+              <input
+                name="name"
+                value={form.name}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-2"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Email</label>
+              <input
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-2"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Role</label>
+              <select
+                name="role"
+                value={form.role}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="User">User</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Status</label>
+              <select
+                name="status"
+                value={form.status}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-2"
+              >
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Join Date</label>
+              <input
+                name="joinDate"
+                type="date"
+                value={form.joinDate}
+                onChange={handleInputChange}
+                className="w-full border rounded px-3 py-2"
+                required
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit">Create</Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
