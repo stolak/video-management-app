@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Eye, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -28,45 +28,23 @@ interface Video {
   fileSize: string
   duration: string
   created: string
-  url: string
+  s3_url: string
 }
 
-export default function VideoList() {
-  const [videos, setVideos] = useState<Video[]>([])
-  const [loading, setLoading] = useState(true)
+interface VideoListProps {
+  videos: Video[]
+}
+
+export default function VideoList({ videos }: VideoListProps) {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
-
-  useEffect(() => {
-    // Mock data - replace with API call
-    const mockVideos: Video[] = [
-      {
-        id: "1",
-        title: "dcdf",
-        user: "Stephen",
-        userEmail: "stolaksoftech@yahoo.com",
-        status: "ready",
-        fileSize: "Unknown",
-        duration: "Unknown",
-        created: "7/8/2025",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      },
-    ]
-
-    setVideos(mockVideos)
-    setLoading(false)
-  }, [])
 
   const handleDelete = async (videoId: string) => {
     try {
-      setVideos(videos.filter((v) => v.id !== videoId))
+      // Optionally, you can call an API to delete the video from the backend here
       toast.success("Video deleted successfully")
     } catch (error) {
       toast.error("Failed to delete video")
     }
-  }
-
-  if (loading) {
-    return <div>Loading videos...</div>
   }
 
   return (
@@ -153,7 +131,7 @@ export default function VideoList() {
           {selectedVideo && (
             <div className="aspect-video">
               <video className="w-full h-full" controls autoPlay>
-                <source src={selectedVideo.url} />
+                <source src={selectedVideo.s3_url} />
                 Your browser does not support the video tag.
               </video>
             </div>

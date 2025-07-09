@@ -5,7 +5,6 @@ import { getSupabaseServerClient } from "@/lib/supabaseServerClient"
 export async function POST(request: NextRequest) {
   try {
     // Get bearer token from Authorization header
-    
     const cookiesToken = request.cookies.get("auth-token")?.value
     const authHeader = request.headers.get("authorization")
     const token = authHeader && authHeader.startsWith("Bearer ") ? authHeader.replace("Bearer ", "") : cookiesToken
@@ -25,12 +24,13 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get("file") as File
     const title = formData.get("title") as string
+     const agentId = formData.get("agentId") as string
+      const callId = formData.get("callId") as string
     const description = formData.get("description") as string
     console.log("Form data received:", { title, description, file })
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
-
     if (!title) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 })
     }
@@ -38,10 +38,33 @@ export async function POST(request: NextRequest) {
     // Upload to S3 using the utility function
     const s3Result = await uploadFileToS3(file, user)
 
-    // Optionally, save metadata to database here
-    console.log("S3 upload result:", s3Result)
+    // Save video record to Supabase
+    const { data: videoData, error: videoError } = await supabase
+      .from("videos")
+      .insert([
+        {
+          user_id: user.id,
+          title,
+          description,
+          s3_url: s3Result.url,
+          file_size: file.size,
+          agent_id: agentId, // Add agentId if needed
+          call_id: callId, // Add callId if needed
+          status: "ready", // or "ready" if you proce
+          // ss immediately
+        },
+      ])
+      .select()
+      .single()
+
+    if (videoError) {
+      console.error("Supabase insert error:", videoError)
+      return NextResponse.json({ error: "Failed to save video record" }, { status: 500 })
+    }
+
     return NextResponse.json({
-      message: "Video uploaded successfully",
+      message: "Video uploaded and saved successfully",
+      video: videoData,
       url: s3Result.url,
       key: s3Result.key,
       mimetype: s3Result.mimetype,

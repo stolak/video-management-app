@@ -1,7 +1,5 @@
-import VideoList from "@/components/video-list"
+import VideoListContainer from "@/components/video-list-container"
 import VideoFilters from "@/components/video-filters"
-import { Suspense } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
 
 export default function Dashboard() {
   return (
@@ -15,19 +13,7 @@ export default function Dashboard() {
         <VideoFilters />
       </div>
 
-      <Suspense fallback={<VideoListSkeleton />}>
-        <VideoList />
-      </Suspense>
-    </div>
-  )
-}
-
-function VideoListSkeleton() {
-  return (
-    <div className="space-y-4">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <Skeleton key={i} className="h-16 w-full" />
-      ))}
+      <VideoListContainer />
     </div>
   )
 }
