@@ -26,7 +26,7 @@ interface Video {
   user: string
   userEmail: string
   status: string
-  fileSize: string
+  file_size: string
   duration: string
   created_at: string
   s3_url: string
@@ -86,7 +86,7 @@ export default function VideoList({ videos }: VideoListProps) {
                         {video.status}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{video.fileSize}</td>
+                    <td className="py-3 px-4 text-gray-600">{video.file_size}</td>
                     <td className="py-3 px-4 text-gray-600">{video.duration}</td>
                     <td className="py-3 px-4 text-gray-600">{format(new Date(video.created_at), "yyyy-MM-dd HH:mm")}</td>
                     <td className="py-3 px-4">
