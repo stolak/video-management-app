@@ -13,7 +13,7 @@ import { toast } from "sonner"
 import { supabase } from "@/lib/supabaseClient"
 
 interface AuthFormProps {
-  mode: "signin" | "signup"
+  mode: "signin"| "magic-link" | "signup"
 }
 
 export default function AuthForm({ mode }: AuthFormProps) {
@@ -49,7 +49,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
         } else {
           error = data.error
         }
-      } else {
+      } else if (activeTab === "signup") {
         // Use backend API for sign up
         const response = await fetch("/api/auth/signup", {
           method: "POST",
@@ -64,6 +64,23 @@ export default function AuthForm({ mode }: AuthFormProps) {
         } else {
           error = data.error
         }
+      } else if (activeTab === "magic-link") {
+        // Magic Link logic
+
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`, // redirect here after link click
+          },
+        })
+    
+        if (error) {
+          toast.error("Something went wrong: " + error.message)
+        } else {
+          toast.success("Magic link sent! Check your email.")
+        }
+
+       
       }
       if (error) {
         toast.error(error || "Something went wrong")
@@ -83,10 +100,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <CardDescription>Sign in to your account or create a new one</CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "signin" | "signup")}>
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "signin" | "signup" | "magic-link")}> 
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
+            <TabsTrigger value="magic-link">Magic Link</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            
           </TabsList>
 
           <TabsContent value="signin">
@@ -157,6 +176,25 @@ export default function AuthForm({ mode }: AuthFormProps) {
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating Account..." : "Sign Up"}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="magic-link">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="magic-email">Email</Label>
+                <Input
+                  id="magic-email"
+                  name="email"
+                  type="email"
+                  placeholder="demo@example.com"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Sending..." : "Send Link"}
               </Button>
             </form>
           </TabsContent>

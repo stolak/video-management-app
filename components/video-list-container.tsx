@@ -59,5 +59,5 @@ export default function VideoListContainer({ filters }: VideoListContainerProps)
   }, [filters])
 
   if (loading) return <VideoListSkeleton />
-  return <VideoList videos={videos} />
+  return <VideoList videos={videos} onRefresh={fetchVideos} />
 }

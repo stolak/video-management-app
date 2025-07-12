@@ -27,7 +27,6 @@ export async function POST(request: Request) {
       session: data.session,
       token:data.session.access_token
     })
-console.log("Response data:", response)
     // Set access token as HTTP-only cookie if available
     if (data.session?.access_token) {
       response.cookies.set("auth-token", data.session.access_token, {

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Eye, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -20,6 +20,8 @@ import {
 import { toast } from "sonner"
 import { format } from "date-fns"
 
+
+
 interface Video {
   id: string
   title: string
@@ -33,16 +35,36 @@ interface Video {
 }
 
 interface VideoListProps {
-  videos: Video[]
+  videos: Video[];
+  onRefresh: () => void;
 }
 
-export default function VideoList({ videos }: VideoListProps) {
+export default function VideoList({ videos, onRefresh }: VideoListProps) {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (selectedVideo) {
+      setVideoUrl(null); // reset while loading
+      fetch(`/api/videos?key=${selectedVideo.s3_url}`)
+        .then(res => res.json())
+        .then(data => {
+          setVideoUrl(data.url);
+        });
+    }
+  }, [selectedVideo]);
 
   const handleDelete = async (videoId: string) => {
     try {
-      // Optionally, you can call an API to delete the video from the backend here
-      toast.success("Video deleted successfully")
+      const res = await fetch(`/api/videos/${videoId}`, {
+        method: "DELETE",
+      })
+      if (res.ok) {
+        toast.success("Video deleted successfully")
+        onRefresh(); // Re-query videos
+      } else {
+        toast.error("Failed to delete video")
+      }
     } catch (error) {
       toast.error("Failed to delete video")
     }
@@ -132,7 +154,7 @@ export default function VideoList({ videos }: VideoListProps) {
           {selectedVideo && (
             <div className="aspect-video">
               <video className="w-full h-full" controls autoPlay>
-                <source src={selectedVideo.s3_url} />
+                {videoUrl && <source src={videoUrl} />}
                 Your browser does not support the video tag.
               </video>
             </div>

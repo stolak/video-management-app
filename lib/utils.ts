@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -38,12 +39,34 @@ export async function uploadFileToS3(
   });
 
   await s3Client.send(command);
+ 
+  // sign the url for 7 days
+  const signedUrl = await getSignedUrl(s3Client, new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  }), { expiresIn: 60 * 60 * 24 * 7 }); // 7 days
+
+  console.log("signedUrl", signedUrl)
   return {
     key,
-    url: baseUrl
-      ? `${baseUrl}/${key}`
-      : `https://${bucket}.s3.amazonaws.com/${key}`,
+    // url: baseUrl
+    //   ? `${baseUrl}/${key}`
+    //   : `https://${bucket}.s3.amazonaws.com/${key}`,
+    url: signedUrl,
     mimetype: file.type,
     originalname: file.name,
   };
 }
+
+// Rename the local function to avoid import conflict
+export async function getS3SignedUrl(key: string): Promise<string> {
+  const bucket = process.env.AWS_S3_BUCKET_NAME!;
+  const signedUrl = await getSignedUrl(s3Client, new GetObjectCommand({
+    Bucket: bucket,
+    Key: key,
+  }), { expiresIn: 60 * 15 });// 15 minutes
+
+  console.log("signedUrl", signedUrl)
+  return signedUrl;
+}
+

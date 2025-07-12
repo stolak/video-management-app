@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabaseServerClient"
+import { getS3SignedUrl } from "@/lib/utils" // Uncomment and use if you want to generate signed URLs here
 
 export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const key = searchParams.get("key");
+    if (key) {
+      const url = await getS3SignedUrl(key);
+      return NextResponse.json({ url });
+    }
+
     const supabase = getSupabaseServerClient()
-    const { searchParams } = new URL(request.url)
     const status = searchParams.get("status")
     const startDate = searchParams.get("startDate")
     const endDate = searchParams.get("endDate")

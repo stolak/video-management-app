@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
           user_id: user.id,
           title,
           description,
-          s3_url: s3Result.url,
+          s3_url: s3Result.key,
           file_size: file.size,
           agent_id: agentId, // Add agentId if needed
           call_id: callId, // Add callId if needed
