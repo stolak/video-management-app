@@ -42,6 +42,7 @@ interface VideoListProps {
 export default function VideoList({ videos, onRefresh }: VideoListProps) {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (selectedVideo) {
@@ -55,6 +56,7 @@ export default function VideoList({ videos, onRefresh }: VideoListProps) {
   }, [selectedVideo]);
 
   const handleDelete = async (videoId: string) => {
+    setDeletingId(videoId);
     try {
       const res = await fetch(`/api/videos/${videoId}`, {
         method: "DELETE",
@@ -67,6 +69,8 @@ export default function VideoList({ videos, onRefresh }: VideoListProps) {
       }
     } catch (error) {
       toast.error("Failed to delete video")
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -118,8 +122,12 @@ export default function VideoList({ videos, onRefresh }: VideoListProps) {
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" disabled={deletingId === video.id}>
+                              {deletingId === video.id ? (
+                                <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-gray-500 rounded-full inline-block" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
