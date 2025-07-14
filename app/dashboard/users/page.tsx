@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { MoreHorizontal, User, Plus } from "lucide-react"
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-
+import PageHeader from "@/components/ui/page-header"
 export default function UsersPage() {
   const [showModal, setShowModal] = useState(false)
   const [form, setForm] = useState({ name: "", email: "", role: "User", status: "Active", joinDate: "" })
@@ -34,10 +34,7 @@ export default function UsersPage() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Users</h1>
-          <p className="text-gray-600">Manage user accounts and permissions</p>
-        </div>
+        <PageHeader title="Users" subtitle="Manage user accounts and permissions" />
         <Button onClick={() => setShowModal(true)} className="flex items-center gap-2">
           <Plus className="h-4 w-4" /> Create User
         </Button>
