@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
     const email = data.user.email
     if (email) {
-      postResend("onboarding@resend.dev",email,"new upload",`<p>Congrats on sending your <strong>first email</strong>!</p>`)
+      postResend("onboarding@resend.dev",email,"new upload",`<p>This is a notification that a new screen has successfully be recorded and uploaded <strong>login to ${process.env.NEXT_PUBLIC_BASE_URL!} to check</strong>!</p>`)
     }
     return NextResponse.json({
       message: "Video uploaded and saved successfully",
