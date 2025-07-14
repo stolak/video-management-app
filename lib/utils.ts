@@ -21,7 +21,6 @@ export async function uploadFileToS3(
   language = "en"
 ) {
   const bucket = process.env.AWS_S3_BUCKET_NAME!;
-  const baseUrl = process.env.AWS_CDN_URL;
   if (!file) throw new Error("File not found");
   if (file.size > 25 * 1024 * 1024) throw new Error("File size exceeds 25MB");
 
@@ -46,7 +45,6 @@ export async function uploadFileToS3(
     Key: key,
   }), { expiresIn: 60 * 60 * 24 * 7 }); // 7 days
 
-  console.log("signedUrl", signedUrl)
   return {
     key,
     url: signedUrl,

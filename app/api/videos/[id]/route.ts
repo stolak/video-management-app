@@ -9,7 +9,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
-    console.log("Video deleted:", id)
+
     return NextResponse.json({
       message: "Video deleted successfully",
     })

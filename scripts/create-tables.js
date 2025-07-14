@@ -1,10 +1,9 @@
 const { Client } = require('pg');
+require('dotenv').config({ path: '.env.local' });
 
 // Use your Supabase database connection string from the environment variable
-// const connectionString = process.env.SUPABASE_DB_URL;
-// const connectionString = "postgresql://postgres:RealProject#1233@db.jvwehlcffanhzmyyqdhw.supabase.co:5432/postgres"
-const connectionString = "postgresql://postgres.jvwehlcffanhzmyyqdhw:RealProject%231233@aws-0-eu-north-1.pooler.supabase.com:5432/postgres";
-// console.log("jsjsjsjsj",connectionString);
+ const connectionString = process.env.SUPABASE_DB_URL;
+
 const sql = `
 create table if not exists public.profiles (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -23,6 +22,7 @@ create table if not exists public.videos (
   call_id TEXT,
   title TEXT NOT NULL,
   description TEXT,
+  user_name TEXT,
   s3_url TEXT NOT NULL,
   file_size BIGINT,
   duration INTEGER,

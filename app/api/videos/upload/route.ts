@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized: Invalid token" }, { status: 401 })
     }
     const user = { id: data.user.id, name: data.user.user_metadata?.full_name || data.user.email }
-    console.log("Authenticated user:", user)
+
 
     const formData = await request.formData()
     const file = formData.get("file") as File
@@ -53,8 +53,8 @@ export async function POST(request: NextRequest) {
           file_size: file.size,
           agent_id: agentId, // Add agentId if needed
           call_id: callId, // Add callId if needed
-          status: "ready", // or "ready" if you proce
-          // ss immediately
+          status: "ready", 
+          user_name: user.name,
         },
       ])
       .select()
