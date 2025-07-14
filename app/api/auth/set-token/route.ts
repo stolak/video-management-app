@@ -5,11 +5,9 @@ import { getSupabaseServerClient } from "@/lib/supabaseServerClient"
 
 export async function POST(req: Request) {
   try{
-    console.log("jjdjddj",req.body)
- 
 
   const { access_token } = await req.json()
-console.log(access_token)
+
 if (!access_token) {
   return NextResponse.json({ error: 'Missing token' }, { status: 401 })
 }
@@ -17,11 +15,9 @@ if (!access_token) {
     const supabase = getSupabaseServerClient()
   const { data, error } = await supabase.auth.getUser(access_token)
   if (error || !data.user) {
-    console.log(error)
     return NextResponse.json({ error: "Unauthorized: Invalid token" }, { status: 401 })
   }
   
-console.log(data)
   const response = NextResponse.json({
       message: "Successfully signed in",
       user: data.user,

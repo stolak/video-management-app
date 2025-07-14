@@ -25,7 +25,7 @@ import { format } from "date-fns"
 interface Video {
   id: string
   title: string
-  user: string
+  user_name: string
   userEmail: string
   status: string
   file_size: string
@@ -100,7 +100,7 @@ export default function VideoList({ videos, onRefresh }: VideoListProps) {
                     <td className="py-3 px-4 font-medium">{video.title}</td>
                     <td className="py-3 px-4">
                       <div>
-                        <div className="font-medium">{video.user}</div>
+                        <div className="font-medium">{video.user_name}</div>
                         <div className="text-sm text-gray-500">{video.userEmail}</div>
                       </div>
                     </td>

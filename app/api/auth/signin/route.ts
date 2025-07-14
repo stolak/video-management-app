@@ -17,11 +17,9 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 401 })
     }
-        // Save token to localStorage
-
-          console.log("Sign in data:", data)
-
-         const response = NextResponse.json({
+        
+    
+    const response = NextResponse.json({
       message: "Successfully signed in",
       user: data.user,
       session: data.session,

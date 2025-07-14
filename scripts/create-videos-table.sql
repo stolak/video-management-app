@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS videos (
   id SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
   description TEXT,
+  user_name TEXT,
   filename VARCHAR(255) NOT NULL,
   url TEXT NOT NULL,
   size BIGINT NOT NULL,

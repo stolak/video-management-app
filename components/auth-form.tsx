@@ -33,7 +33,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
     try {
       let error
       if (activeTab === "signin") {
-        console.log("Form DDDDdata:", { email, password, fullName })
         // Use custom API for sign in
         const response = await fetch("/api/auth/signin", {
           method: "POST",
@@ -86,7 +85,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
         toast.error(error || "Something went wrong")
       }
     } catch (error) {
-      console.log("Auth error:", error)
       toast.error("Network error. Please try again.")
     } finally {
       setIsLoading(false)
