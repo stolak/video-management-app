@@ -10,9 +10,10 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { toast } from "sonner"
+import { supabase } from "@/lib/supabaseClient"
 
 interface AuthFormProps {
-  mode: "signin" | "signup"
+  mode: "signin"| "magic-link" | "signup"
 }
 
 export default function AuthForm({ mode }: AuthFormProps) {
@@ -30,25 +31,62 @@ export default function AuthForm({ mode }: AuthFormProps) {
     const fullName = formData.get("fullName") as string
 
     try {
-      const endpoint = activeTab === "signin" ? "/api/auth/signin" : "/api/auth/signup"
-      const body = activeTab === "signin" ? { email, password } : { email, password, fullName }
+      let error
+      if (activeTab === "signin") {
+        console.log("Form DDDDdata:", { email, password, fullName })
+        // Use custom API for sign in
+        const response = await fetch("/api/auth/signin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password }),
+        })
+        const data = await response.json()
+        if (response.ok) {
+          
+          toast.success("Signed in successfully!")
+          router.push("/dashboard")
+          router.refresh()
+        } else {
+          error = data.error
+        }
+      } else if (activeTab === "signup") {
+        // Use backend API for sign up
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, full_name: fullName }),
+        })
+        const data = await response.json()
+        if (response.ok) {
+          toast.success("Account created successfully!")
+          router.push("/dashboard")
+          router.refresh()
+        } else {
+          error = data.error
+        }
+      } else if (activeTab === "magic-link") {
+        // Magic Link logic
 
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: {
+            emailRedirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/auth/callback`, // redirect here after link click
+          },
+        })
+    
+        if (error) {
+          toast.error("Something went wrong: " + error.message)
+        } else {
+          toast.success("Magic link sent! Check your email.")
+        }
 
-      const data = await response.json()
-
-      if (response.ok) {
-        toast.success(activeTab === "signin" ? "Signed in successfully!" : "Account created successfully!")
-        router.push("/dashboard")
-        router.refresh()
-      } else {
-        toast.error(data.error || "Something went wrong")
+       
+      }
+      if (error) {
+        toast.error(error || "Something went wrong")
       }
     } catch (error) {
+      console.log("Auth error:", error)
       toast.error("Network error. Please try again.")
     } finally {
       setIsLoading(false)
@@ -62,10 +100,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <CardDescription>Sign in to your account or create a new one</CardDescription>
       </CardHeader>
       <CardContent>
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "signin" | "signup")}>
-          <TabsList className="grid w-full grid-cols-2">
+        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "signin" | "signup" | "magic-link")}> 
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="signin">Sign In</TabsTrigger>
+            <TabsTrigger value="magic-link">Magic Link</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            
           </TabsList>
 
           <TabsContent value="signin">
@@ -136,6 +176,25 @@ export default function AuthForm({ mode }: AuthFormProps) {
               </div>
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Creating Account..." : "Sign Up"}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="magic-link">
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="magic-email">Email</Label>
+                <Input
+                  id="magic-email"
+                  name="email"
+                  type="email"
+                  placeholder="demo@example.com"
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Sending..." : "Send Link"}
               </Button>
             </form>
           </TabsContent>

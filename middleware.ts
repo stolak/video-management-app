@@ -6,7 +6,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Public routes that don't require authentication
-  const publicRoutes = ["/auth/signin", "/auth/signup"]
+  const publicRoutes = ["/auth/signin", "/auth/signup","/auth/callback"]
 
   // If user is not authenticated and trying to access protected routes
   if (!token && !publicRoutes.includes(pathname) && pathname !== "/") {

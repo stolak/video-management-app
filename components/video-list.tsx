@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Eye, Trash2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -18,6 +18,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
+import { format } from "date-fns"
+
+
 
 interface Video {
   id: string
@@ -25,48 +28,50 @@ interface Video {
   user: string
   userEmail: string
   status: string
-  fileSize: string
+  file_size: string
   duration: string
-  created: string
-  url: string
+  created_at: string
+  s3_url: string
 }
 
-export default function VideoList() {
-  const [videos, setVideos] = useState<Video[]>([])
-  const [loading, setLoading] = useState(true)
+interface VideoListProps {
+  videos: Video[];
+  onRefresh: () => void;
+}
+
+export default function VideoList({ videos, onRefresh }: VideoListProps) {
   const [selectedVideo, setSelectedVideo] = useState<Video | null>(null)
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Mock data - replace with API call
-    const mockVideos: Video[] = [
-      {
-        id: "1",
-        title: "dcdf",
-        user: "Stephen",
-        userEmail: "stolaksoftech@yahoo.com",
-        status: "ready",
-        fileSize: "Unknown",
-        duration: "Unknown",
-        created: "7/8/2025",
-        url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-      },
-    ]
-
-    setVideos(mockVideos)
-    setLoading(false)
-  }, [])
+    if (selectedVideo) {
+      setVideoUrl(null); // reset while loading
+      fetch(`/api/videos?key=${selectedVideo.s3_url}`)
+        .then(res => res.json())
+        .then(data => {
+          setVideoUrl(data.url);
+        });
+    }
+  }, [selectedVideo]);
 
   const handleDelete = async (videoId: string) => {
+    setDeletingId(videoId);
     try {
-      setVideos(videos.filter((v) => v.id !== videoId))
-      toast.success("Video deleted successfully")
+      const res = await fetch(`/api/videos/${videoId}`, {
+        method: "DELETE",
+      })
+      if (res.ok) {
+        toast.success("Video deleted successfully")
+        onRefresh(); // Re-query videos
+      } else {
+        toast.error("Failed to delete video")
+      }
     } catch (error) {
       toast.error("Failed to delete video")
+    } finally {
+      setDeletingId(null);
     }
-  }
-
-  if (loading) {
-    return <div>Loading videos...</div>
   }
 
   return (
@@ -107,9 +112,10 @@ export default function VideoList() {
                         {video.status}
                       </Badge>
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{video.fileSize}</td>
-                    <td className="py-3 px-4 text-gray-600">{video.duration}</td>
-                    <td className="py-3 px-4 text-gray-600">{video.created}</td>
+                    <td className="py-3 px-4 text-gray-600">{video.file_size}</td>
+<td className="py-3 px-4 text-gray-600">
+  {Math.floor(Number(video?.duration) / 60)}:{String(Number(video?.duration) % 60).padStart(2, '0')}
+</td>                    <td className="py-3 px-4 text-gray-600">{format(new Date(video.created_at), "yyyy-MM-dd HH:mm")}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={() => setSelectedVideo(video)}>
@@ -117,8 +123,12 @@ export default function VideoList() {
                         </Button>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <Trash2 className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" disabled={deletingId === video.id}>
+                              {deletingId === video.id ? (
+                                <span className="animate-spin h-4 w-4 border-2 border-t-transparent border-gray-500 rounded-full inline-block" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
                             </Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
@@ -153,7 +163,7 @@ export default function VideoList() {
           {selectedVideo && (
             <div className="aspect-video">
               <video className="w-full h-full" controls autoPlay>
-                <source src={selectedVideo.url} />
+                {videoUrl && <source src={videoUrl} />}
                 Your browser does not support the video tag.
               </video>
             </div>

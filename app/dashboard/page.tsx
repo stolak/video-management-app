@@ -1,9 +1,24 @@
-import VideoList from "@/components/video-list"
+"use client"
+
+import VideoListContainer from "@/components/video-list-container"
 import VideoFilters from "@/components/video-filters"
-import { Suspense } from "react"
-import { Skeleton } from "@/components/ui/skeleton"
+import { useState } from "react"
 
 export default function Dashboard() {
+  const [filters, setFilters] = useState({
+    search: "",
+    status: "all",
+    dateRange: {},
+  })
+
+  function handleFilterChange(newFilters: {
+    search: string
+    status: string
+    dateRange: { from?: Date; to?: Date }
+  }) {
+    setFilters(newFilters)
+  }
+
   return (
     <div>
       <div className="mb-6">
@@ -12,22 +27,10 @@ export default function Dashboard() {
       </div>
 
       <div className="mb-6">
-        <VideoFilters />
+        <VideoFilters onChange={handleFilterChange} />
       </div>
 
-      <Suspense fallback={<VideoListSkeleton />}>
-        <VideoList />
-      </Suspense>
-    </div>
-  )
-}
-
-function VideoListSkeleton() {
-  return (
-    <div className="space-y-4">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <Skeleton key={i} className="h-16 w-full" />
-      ))}
+      <VideoListContainer filters={filters} />
     </div>
   )
 }

@@ -1,33 +1,42 @@
 import { NextResponse } from "next/server"
+import { getSupabaseServerClient } from "@/lib/supabaseServerClient"
+import { getS3SignedUrl } from "@/lib/utils" // Uncomment and use if you want to generate signed URLs here
 
-// Mock data - replace with actual database queries
-const mockVideos = [
-  {
-    id: "1",
-    title: "Sample Video 1",
-    description: "This is a sample video for demonstration",
-    filename: "sample1.mp4",
-    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-    size: 15728640, // 15MB
-    uploadedAt: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    title: "Sample Video 2",
-    description: "Another sample video",
-    filename: "sample2.mp4",
-    url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-    size: 25165824, // 24MB
-    uploadedAt: new Date(Date.now() - 86400000).toISOString(), // 1 day ago
-  },
-]
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // In a real app, fetch from your database
-    // const videos = await db.select().from(videosTable)
+    const { searchParams } = new URL(request.url);
+    const key = searchParams.get("key");
+    if (key) {
+      const url = await getS3SignedUrl(key);
+      return NextResponse.json({ url });
+    }
 
-    return NextResponse.json(mockVideos)
+    const supabase = getSupabaseServerClient()
+    const status = searchParams.get("status")
+    const startDate = searchParams.get("startDate")
+    const endDate = searchParams.get("endDate")
+
+    let query = supabase.from("videos").select("*")
+
+    if (status) {
+      query = query.eq("status", status)
+    }
+    if (startDate) {
+      query = query.gte("created_at", startDate)
+    }
+    if (endDate) {
+      query = query.lte("created_at", endDate)
+    }
+
+    query = query.order("created_at", { ascending: false })
+
+    const { data, error } = await query
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json(data)
   } catch (error) {
     return NextResponse.json({ error: "Failed to fetch videos" }, { status: 500 })
   }
