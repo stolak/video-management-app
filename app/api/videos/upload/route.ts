@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { uploadFileToS3 } from "@/lib/utils"
 import { getSupabaseServerClient } from "@/lib/supabaseServerClient"
+import { postResend } from "@/lib/utils"
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,6 +27,7 @@ export async function POST(request: NextRequest) {
     const title = formData.get("title") as string
      const agentId = formData.get("agentId") as string
       const callId = formData.get("callId") as string
+       const duration = formData.get("duration")||0 as number
     const description = formData.get("description") as string
     console.log("Form data received:", { title, description, file })
     if (!file) {
@@ -46,6 +48,7 @@ export async function POST(request: NextRequest) {
           user_id: user.id,
           title,
           description,
+          duration,
           s3_url: s3Result.key,
           file_size: file.size,
           agent_id: agentId, // Add agentId if needed
@@ -61,7 +64,10 @@ export async function POST(request: NextRequest) {
       console.error("Supabase insert error:", videoError)
       return NextResponse.json({ error: "Failed to save video record" }, { status: 500 })
     }
-
+    const email = data.user.email
+    if (email) {
+      postResend("onboarding@resend.dev",email,"new upload",`<p>Congrats on sending your <strong>first email</strong>!</p>`)
+    }
     return NextResponse.json({
       message: "Video uploaded and saved successfully",
       video: videoData,

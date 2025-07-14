@@ -113,8 +113,9 @@ export default function VideoList({ videos, onRefresh }: VideoListProps) {
                       </Badge>
                     </td>
                     <td className="py-3 px-4 text-gray-600">{video.file_size}</td>
-                    <td className="py-3 px-4 text-gray-600">{video.duration}</td>
-                    <td className="py-3 px-4 text-gray-600">{format(new Date(video.created_at), "yyyy-MM-dd HH:mm")}</td>
+<td className="py-3 px-4 text-gray-600">
+  {Math.floor(Number(video?.duration) / 60)}:{String(Number(video?.duration) % 60).padStart(2, '0')}
+</td>                    <td className="py-3 px-4 text-gray-600">{format(new Date(video.created_at), "yyyy-MM-dd HH:mm")}</td>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-1">
                         <Button variant="ghost" size="sm" onClick={() => setSelectedVideo(video)}>

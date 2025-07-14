@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-
+import { Resend } from 'resend';
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -49,9 +49,6 @@ export async function uploadFileToS3(
   console.log("signedUrl", signedUrl)
   return {
     key,
-    // url: baseUrl
-    //   ? `${baseUrl}/${key}`
-    //   : `https://${bucket}.s3.amazonaws.com/${key}`,
     url: signedUrl,
     mimetype: file.type,
     originalname: file.name,
@@ -70,3 +67,13 @@ export async function getS3SignedUrl(key: string): Promise<string> {
   return signedUrl;
 }
 
+  export async function postResend(from: string, to: string, subject: string, body: string): Promise<boolean> {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const response = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html: body,
+    });
+    return response && !response.error;
+  }
